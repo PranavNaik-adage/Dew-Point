@@ -203,8 +203,9 @@ def wilson_k(Pc_atm, P_atm, omega, Tc_K, T_K):
 
 
 @st.cache_data(show_spinner=False)
-def load_database(file_bytes):
-    df = pd.read_excel(io.BytesIO(file_bytes), header=None, skiprows=7)
+def load_database():
+    """Load database.xlsx bundled alongside app.py in the repo."""
+    df = pd.read_excel("database.xlsx", header=None, skiprows=7)
     df.columns = [
         'NUMBER', 'COMPONENT', 'MOLE_WT', 'TFP', 'TB',
         'TC', 'PC', 'VC', 'ZC', 'OMEGA',
@@ -325,15 +326,6 @@ with st.sidebar:
     st.markdown("# ⚙️ Configuration")
     st.markdown("---")
 
-    st.markdown("**Thermodynamic Database**")
-    db_file = st.file_uploader(
-        "Upload database.xlsx",
-        type=["xlsx"],
-        key="db_upload",
-        help="The component property database (Tc, Pc, ω, etc.)",
-    )
-
-    st.markdown("---")
     st.markdown("**Operating Pressure**")
     pressure = st.number_input(
         "Pressure (kg/cm² gauge)",
@@ -384,15 +376,15 @@ comp_file = st.file_uploader(
 )
 
 # ── Run ────────────────────────────────────────────────────────────────────────
-if comp_file and db_file:
+if comp_file:
     run_btn = st.button("▶  Calculate All Sheets", use_container_width=False)
 
     if run_btn:
         with st.spinner("Loading database…"):
             try:
-                db = load_database(db_file.read())
+                db = load_database()
             except Exception as e:
-                st.error(f"Failed to load database: {e}")
+                st.error(f"Failed to load database.xlsx — make sure it is in the same folder as app.py: {e}")
                 st.stop()
 
         with st.spinner("Running Wilson calculations…"):
@@ -525,13 +517,7 @@ if comp_file and db_file:
                         hide_index=True,
                     )
 
-elif comp_file and not db_file:
-    st.info("👈  Please upload your **database.xlsx** in the sidebar to proceed.")
-
-elif db_file and not comp_file:
-    st.info("☝️  Please upload your **Composition_Table.xlsx** above to proceed.")
-
-else:
+elif not comp_file:
     # Landing state
     st.markdown("""
     <div style='
@@ -546,7 +532,6 @@ else:
         How to use
     </h3>
     <ol style='color:#94a3b8;font-size:0.88rem;line-height:2;'>
-        <li>Upload <code>database.xlsx</code> in the <b>sidebar</b></li>
         <li>Set your <b>operating pressure</b> (kg/cm² gauge) in the sidebar</li>
         <li>Upload your <code>Composition_Table.xlsx</code> above</li>
         <li>Click <b>Calculate All Sheets</b></li>
@@ -558,3 +543,5 @@ else:
     </p>
     </div>
     """, unsafe_allow_html=True)
+
+
